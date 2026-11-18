@@ -1,0 +1,298 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Global default-deny safety net
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isVerifiedUser() {
+      return isSignedIn() && request.auth.token.email_verified == true;
+    }
+
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+
+    function isValidUserProfile(data) {
+      return data.keys().hasAll(['uid', 'displayName', 'email', 'createdAt', 'updatedAt'])
+        && data.keys().hasOnly(['uid', 'displayName', 'email', 'photoURL', 'createdAt', 'updatedAt'])
+        && data.uid is string
+        && data.uid == request.auth.uid
+        && isValidId(data.uid)
+        && data.displayName is string
+        && data.displayName.size() >= 1
+        && data.displayName.size() <= 100
+        && data.email is string
+        && data.email.size() >= 3
+        && data.email.size() <= 150
+        && (!('photoURL' in data) || (data.photoURL is string && data.photoURL.size() <= 500))
+        && data.createdAt is timestamp
+        && data.updatedAt is timestamp;
+    }
+
+    function isValidTestimonial(data) {
+      return data.keys().hasAll([
+          'authorId',
+          'authorName',
+          'role',
+          'location',
+          'category',
+          'rating',
+          'quote',
+          'deliveryDays',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'authorId',
+          'authorName',
+          'role',
+          'location',
+          'category',
+          'rating',
+          'quote',
+          'deliveryDays',
+          'createdAt'
+        ])
+        && data.authorId is string
+        && data.authorId == request.auth.uid
+        && isValidId(data.authorId)
+        && data.authorName is string
+        && data.authorName.size() >= 2
+        && data.authorName.size() <= 80
+        && data.role is string
+        && data.role.size() >= 2
+        && data.role.size() <= 80
+        && data.location is string
+        && data.location.size() >= 2
+        && data.location.size() <= 80
+        && data.category is string
+        && data.category.size() >= 2
+        && data.category.size() <= 60
+        && data.rating is int
+        && data.rating >= 1
+        && data.rating <= 5
+        && data.quote is string
+        && data.quote.size() >= 10
+        && data.quote.size() <= 600
+        && data.deliveryDays is string
+        && data.deliveryDays.size() >= 2
+        && data.deliveryDays.size() <= 60
+        && data.createdAt is timestamp;
+    }
+
+    function isValidQuote(data) {
+      return data.keys().hasAll([
+          'userId',
+          'refId',
+          'fullName',
+          'phone',
+          'country',
+          'addressSummary',
+          'shippingMethod',
+          'paymentMethod',
+          'itemCount',
+          'itemsSummary',
+          'subtotal',
+          'shippingCharge',
+          'usaTariff',
+          'grandTotal',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'userId',
+          'refId',
+          'fullName',
+          'phone',
+          'country',
+          'addressSummary',
+          'email',
+          'shippingMethod',
+          'paymentMethod',
+          'itemCount',
+          'itemsSummary',
+          'subtotal',
+          'shippingCharge',
+          'usaTariff',
+          'grandTotal',
+          'createdAt'
+        ])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && isValidId(data.userId)
+        && data.refId is string
+        && data.refId.size() >= 4
+        && data.refId.size() <= 40
+        && data.fullName is string
+        && data.fullName.size() >= 1
+        && data.fullName.size() <= 100
+        && data.phone is string
+        && data.phone.size() >= 4
+        && data.phone.size() <= 35
+        && data.country is string
+        && data.country.size() >= 2
+        && data.country.size() <= 80
+        && data.addressSummary is string
+        && data.addressSummary.size() >= 4
+        && data.addressSummary.size() <= 250
+        && (!('email' in data) || (data.email is string && data.email.size() <= 150))
+        && data.shippingMethod in ['ems', 'itps', 'triangle']
+        && data.paymentMethod is string
+        && data.paymentMethod.size() >= 2
+        && data.paymentMethod.size() <= 50
+        && data.itemCount is int
+        && data.itemCount >= 1
+        && data.itemCount <= 10000
+        && data.itemsSummary is string
+        && data.itemsSummary.size() >= 2
+        && data.itemsSummary.size() <= 1500
+        && data.subtotal is number
+        && data.subtotal >= 0
+        && data.subtotal <= 1000000
+        && data.shippingCharge is number
+        && data.shippingCharge >= 0
+        && data.shippingCharge <= 100000
+        && data.usaTariff is number
+        && data.usaTariff >= 0
+        && data.usaTariff <= 100000
+        && data.grandTotal is number
+        && data.grandTotal >= 0
+        && data.grandTotal <= 1200000
+        && data.createdAt is timestamp;
+    }
+
+    function isValidInquiry(data) {
+      return data.keys().hasAll([
+          'userId',
+          'name',
+          'country',
+          'phone',
+          'product',
+          'quantity',
+          'canCall',
+          'createdAt'
+        ])
+        && data.keys().hasOnly([
+          'userId',
+          'name',
+          'country',
+          'phone',
+          'email',
+          'product',
+          'quantity',
+          'note',
+          'canCall',
+          'createdAt'
+        ])
+        && data.userId is string
+        && data.userId == request.auth.uid
+        && isValidId(data.userId)
+        && data.name is string
+        && data.name.size() >= 1
+        && data.name.size() <= 100
+        && data.country is string
+        && data.country.size() >= 2
+        && data.country.size() <= 80
+        && data.phone is string
+        && data.phone.size() >= 4
+        && data.phone.size() <= 35
+        && (!('email' in data) || (data.email is string && data.email.size() <= 150))
+        && data.product is string
+        && data.product.size() >= 1
+        && data.product.size() <= 150
+        && data.quantity is string
+        && data.quantity.size() >= 1
+        && data.quantity.size() <= 80
+        && (!('note' in data) || (data.note is string && data.note.size() <= 600))
+        && data.canCall is bool
+        && data.createdAt is timestamp;
+    }
+
+    // Boot connectivity probe document (read-only)
+    match /test/connection {
+      allow get: if true;
+    }
+
+    // Private user profiles (PII isolated to owner)
+    match /users/{userId} {
+      allow get: if isValidId(userId) && isOwner(userId);
+      allow list: if false;
+      allow create: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().createdAt == request.time
+        && incoming().updatedAt == request.time;
+      allow update: if isValidId(userId)
+        && isVerifiedUser()
+        && isOwner(userId)
+        && isValidUserProfile(incoming())
+        && incoming().uid == existing().uid
+        && incoming().createdAt == existing().createdAt
+        && incoming().updatedAt == request.time
+        && incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'photoURL', 'updatedAt']);
+      allow delete: if false;
+    }
+
+    // Public verified customer testimonials (zero PII)
+    match /testimonials/{testimonialId} {
+      allow get: if isValidId(testimonialId);
+      allow list: if true;
+      allow create: if isValidId(testimonialId)
+        && isVerifiedUser()
+        && isValidTestimonial(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if isValidId(testimonialId)
+        && isVerifiedUser()
+        && existing().authorId == request.auth.uid
+        && isValidTestimonial(incoming())
+        && incoming().authorId == existing().authorId
+        && incoming().createdAt == existing().createdAt
+        && incoming().diff(existing()).affectedKeys().hasOnly(['role', 'location', 'category', 'rating', 'quote', 'deliveryDays']);
+      allow delete: if isValidId(testimonialId)
+        && isVerifiedUser()
+        && existing().authorId == request.auth.uid;
+    }
+
+    // Persisted quote requests (PII isolated to owner)
+    match /quotes/{quoteId} {
+      allow get: if isValidId(quoteId) && isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(quoteId)
+        && isVerifiedUser()
+        && isValidQuote(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if isValidId(quoteId) && isVerifiedUser() && existing().userId == request.auth.uid;
+    }
+
+    // Persisted contact inquiries (PII isolated to owner)
+    match /inquiries/{inquiryId} {
+      allow get: if isValidId(inquiryId) && isSignedIn() && existing().userId == request.auth.uid;
+      allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+      allow create: if isValidId(inquiryId)
+        && isVerifiedUser()
+        && isValidInquiry(incoming())
+        && incoming().createdAt == request.time;
+      allow update: if false;
+      allow delete: if false;
+    }
+  }
+}

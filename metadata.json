@@ -1,0 +1,6 @@
+{
+  "name": "DK MEDIMART",
+  "description": "Trusted Pharmaceutical Exporter Delivering Worldwide Since 2009. Genuine medications, specialised packing, and reliable global shipping.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
